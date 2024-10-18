@@ -24,40 +24,37 @@ namespace OriGames.SoulStonesForAll
         private const string SETTINGS_MINI_BOSS_BONUS = "MiniBossBonus";
         private const string SETTINGS_TIER_1_BONUS = "Tier1Bonus";
         private const string SETTINGS_TIER_2_BONUS = "Tier2Bonus";
-        private const string SETTINGS_TIER_3_BONUS = "Tier1Bonus";
+        private const string SETTINGS_TIER_3_BONUS = "Tier3Bonus";
         private const string SETTINGS_CHEST_BONUS = "ChestBonus";
         private const string SETTINGS_EVERYTHING_BONUS = "EverythingBonus";
 
         protected void Awake()
         {
-            // Set up the logger and basic config items
             WobPlugin.Initialise(this, Logger);
             
-            Log("Initialising");
-            Logger.LogError("Initialising");
-            
-            // Create/read the mod specific configuration options
-            WobSettings.Add(new WobSettings.Entry[]
+            try
             {
-                new WobSettings.Num<int>(SETTINGS_TIER_1_BONUS, "Get this amount of soul stones from tier 1 (basic) variant enemies", 0,
-                    1, bounds: (0, 1000000)),
-                new WobSettings.Num<int>(SETTINGS_TIER_2_BONUS, "Get this amount of soul stones from tier 2 (advanced) variant enemies", 0,
-                    1, bounds: (0, 1000000)),
-                new WobSettings.Num<int>(SETTINGS_TIER_3_BONUS, "Get this amount of soul stones from tier 3 (commander) variant enemies",0,
-                    1, bounds: (0, 1000000)),
-                new WobSettings.Num<int>(SETTINGS_MINI_BOSS_BONUS, "Get this amount of soul stones from mini bosses", 0,
-                    1, bounds: (0, 1000000)),
-                new WobSettings.Num<int>(SETTINGS_BOSS_SOULS_GAIN, "Get this amount of soul stones from bosses", 100,
-                    1, bounds: (0, 1000000)),
-                new WobSettings.Num<int>(SETTINGS_CHEST_BONUS, "Get this amount of soul stones for every opened chest", 0, 1, bounds: (0, 1000000)),
-                new WobSettings.Num<int>(SETTINGS_EVERYTHING_BONUS, "Increases amount of soul stones by this value every time they drop", 0, 1, bounds: (0, 1000000)),
-            });
+                WobSettings.Add(new WobSettings.Entry[]
+                {
+                    new WobSettings.Num<int>(SETTINGS_TIER_1_BONUS, "Get this amount of soul stones from tier 1 (basic) variant enemies", 0, 1, bounds: (0, 1000000)),
+                    new WobSettings.Num<int>(SETTINGS_TIER_2_BONUS, "Get this amount of soul stones from tier 2 (advanced) variant enemies", 0, 1, bounds: (0, 1000000)),
+                    new WobSettings.Num<int>(SETTINGS_TIER_3_BONUS, "Get this amount of soul stones from tier 3 (commander) variant enemies",0, 1, bounds: (0, 1000000)),
+                    new WobSettings.Num<int>(SETTINGS_MINI_BOSS_BONUS, "Get this amount of soul stones from mini bosses", 0, 1, bounds: (0, 1000000)),
+                    new WobSettings.Num<int>(SETTINGS_BOSS_SOULS_GAIN, "Get this amount of soul stones from bosses", 100, 1, bounds: (0, 1000000)),
+                    new WobSettings.Num<int>(SETTINGS_CHEST_BONUS, "Get this amount of soul stones for every opened chest", 0, 1, bounds: (0, 1000000)),
+                    new WobSettings.Num<int>(SETTINGS_EVERYTHING_BONUS, "Increases amount of soul stones by this value every time they drop", 0, 1, bounds: (0, 1000000)),
+                });
+            }
+            catch (Exception e)
+            {
+                Log(e.Message);
+            }
 
             // Cache the settings into a dictionary based on the EnemyRank enum
-            RankBonus.Add((int)EnemyRank.Basic, WobSettings.Get("Tier1Bonus", 0f));
-            RankBonus.Add((int)EnemyRank.Advanced, WobSettings.Get("Tier2Bonus", 0f));
-            RankBonus.Add((int)EnemyRank.Expert, WobSettings.Get("Tier3Bonus", 0f));
-            RankBonus.Add((int)EnemyRank.Miniboss, WobSettings.Get("MiniBossBonus", 0f));
+            // RankBonus.Add((int)EnemyRank.Basic, WobSettings.Get("Tier1Bonus", 0f));
+            // RankBonus.Add((int)EnemyRank.Advanced, WobSettings.Get("Tier2Bonus", 0f));
+            // RankBonus.Add((int)EnemyRank.Expert, WobSettings.Get("Tier3Bonus", 0f));
+            // RankBonus.Add((int)EnemyRank.Miniboss, WobSettings.Get("MiniBossBonus", 0f));
             
             //ItemEventTracker
             
@@ -65,6 +62,8 @@ namespace OriGames.SoulStonesForAll
             WobPlugin.Patch();
             
             //OnChestOpened
+            
+            Log("Mod initialised");
         }
 
         [HarmonyPatch(typeof(Souls_EV), MethodType.StaticConstructor)]
@@ -105,7 +104,7 @@ namespace OriGames.SoulStonesForAll
             {
                 //Messenger<GameMessenger, GameEvent>.Broadcast(GameEvent.SoulChanged, null, (EventArgs) null);
                 Log($"Giving player souls");
-
+                
                 ItemDropManager.DropItem(ItemDropType.Soul, amount, Vector3.zero, false, true);
 
                 //var d = new SoulDrop();
@@ -128,10 +127,10 @@ namespace OriGames.SoulStonesForAll
         {
             private static void Postfix(ItemDropType itemDrop, bool getGoldValueOnly, ref int __result)
             {
-                Log($"EconomyEV_GetItemDropValue_Patch {itemDrop} {getGoldValueOnly}");
-
                 if (itemDrop == ItemDropType.Soul && !getGoldValueOnly)
                 {
+                    Log($"EconomyEV_GetItemDropValue_Patch {itemDrop} {getGoldValueOnly}");
+
                     var increment = WobSettings.Get(SETTINGS_EVERYTHING_BONUS, 0);
 
                     __result += increment;
