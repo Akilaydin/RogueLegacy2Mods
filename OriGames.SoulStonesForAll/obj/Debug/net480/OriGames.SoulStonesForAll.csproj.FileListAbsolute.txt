@@ -1,0 +1,9 @@
+H:\CSharpProjects\RogueLegacySoulStonesMod\OriGames.SoulStonesForAll\bin\Debug\net480\OriGames.SoulStonesForAll.dll
+H:\CSharpProjects\RogueLegacySoulStonesMod\OriGames.SoulStonesForAll\bin\Debug\net480\OriGames.SoulStonesForAll.pdb
+H:\CSharpProjects\RogueLegacySoulStonesMod\OriGames.SoulStonesForAll\obj\Debug\net480\OriGames.SoulStonesForAll.csproj.AssemblyReference.cache
+H:\CSharpProjects\RogueLegacySoulStonesMod\OriGames.SoulStonesForAll\obj\Debug\net480\OriGames.SoulStonesForAll.GeneratedMSBuildEditorConfig.editorconfig
+H:\CSharpProjects\RogueLegacySoulStonesMod\OriGames.SoulStonesForAll\obj\Debug\net480\OriGames.SoulStonesForAll.AssemblyInfoInputs.cache
+H:\CSharpProjects\RogueLegacySoulStonesMod\OriGames.SoulStonesForAll\obj\Debug\net480\OriGames.SoulStonesForAll.AssemblyInfo.cs
+H:\CSharpProjects\RogueLegacySoulStonesMod\OriGames.SoulStonesForAll\obj\Debug\net480\OriGames.SoulStonesForAll.csproj.CoreCompileInputs.cache
+H:\CSharpProjects\RogueLegacySoulStonesMod\OriGames.SoulStonesForAll\obj\Debug\net480\OriGames.SoulStonesForAll.dll
+H:\CSharpProjects\RogueLegacySoulStonesMod\OriGames.SoulStonesForAll\obj\Debug\net480\OriGames.SoulStonesForAll.pdb

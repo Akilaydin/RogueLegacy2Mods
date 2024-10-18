@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.32014.148
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Wob_Common", "Wob_Common\Wob_Common.shproj", "{C2D09D20-E45B-434A-8E6E-16703A8B76DB}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OriGames.SoulStonesForAll", "OriGames.SoulStonesForAll\OriGames.SoulStonesForAll.csproj", "{F76DC946-AC74-449F-B365-2C159D5514FF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F76DC946-AC74-449F-B365-2C159D5514FF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F76DC946-AC74-449F-B365-2C159D5514FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F76DC946-AC74-449F-B365-2C159D5514FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F76DC946-AC74-449F-B365-2C159D5514FF}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D112DA6C-541F-4B4B-B7D4-32DDCC1C32D0}
+	EndGlobalSection
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		Wob_Common\Wob_Common.projitems*{c2d09d20-e45b-434a-8e6e-16703a8b76db}*SharedItemsImports = 13
+		Wob_Common\Wob_Common.projitems*{f76dc946-ac74-449f-b365-2c159d5514ff}*SharedItemsImports = 5
+	EndGlobalSection
+EndGlobal
