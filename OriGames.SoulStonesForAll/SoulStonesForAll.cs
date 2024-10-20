@@ -8,6 +8,7 @@ namespace OriGames.SoulStonesForAll
 {
     using System;
     using System.Collections.Generic;
+    using System.Reflection;
     using System.Reflection.Emit;
 
     using BepInEx.Configuration;
@@ -78,25 +79,32 @@ namespace OriGames.SoulStonesForAll
             }
         }
         
-        [HarmonyPatch(typeof(ItemEventTracker), "OnChestOpened")]
-        public static class ItemEventTrackerPatch
+        [HarmonyPatch(typeof(ItemEventTracker), nameof(ItemEventTracker.OnChestOpened))]
+        public static class ItemEventTracker_OnChestOpened_Patch
         {
             static void Postfix(MonoBehaviour sender, EventArgs eventArgs)
             {
-                Log($"On chest opened 1");
-
-                if (eventArgs is ChestOpenedEventArgs args)
+                try
                 {
-                    Log($"On chest opened 2");
+                    Log($"On chest opened 1");
 
-                    if (args.SpecialItemType == SpecialItemType.Rune 
-                        || args.SpecialItemType == SpecialItemType.Ore 
-                        || args.SpecialItemType == SpecialItemType.Gold)
+                    if (eventArgs is ChestOpenedEventArgs args)
                     {
-                        Log($"On chest opened 3");
+                        Log($"On chest opened 2");
 
-                        GivePlayerSouls(WobSettings.Get(SETTINGS_CHEST_BONUS, 0));
+                        if (args.SpecialItemType == SpecialItemType.Rune 
+                            || args.SpecialItemType == SpecialItemType.Ore 
+                            || args.SpecialItemType == SpecialItemType.Gold)
+                        {
+                            Log($"On chest opened 3");
+
+                            GivePlayerSouls(WobSettings.Get(SETTINGS_CHEST_BONUS, 0f), args.Chest.transform.position);
+                        }
                     }
+                }
+                catch (Exception e)
+                {
+                    Log($"Exception in {nameof(ItemEventTracker_OnChestOpened_Patch)}: {e.ToString()}");
                 }
             }
         }
@@ -122,11 +130,11 @@ namespace OriGames.SoulStonesForAll
                 {
                     if (itemDrop == ItemDropType.Soul && !getGoldValueOnly)
                     {
-                        float increment = 0f; //WobSettings.Get(SETTINGS_EVERYTHING_BONUS, 0);
+                        //float increment = WobSettings.Get(SETTINGS_EVERYTHING_BONUS, 0);
 
-                        __result += (int)increment;
+                        //__result += (int)increment;
                     
-                        Log($"EconomyEV_GetItemDropValue_Patch increment was {increment} and final result was {__result}");
+                        //Log($"EconomyEV_GetItemDropValue_Patch increment was {increment} and final result was {__result}");
                     }
                 }
                 catch (Exception e)
@@ -149,35 +157,81 @@ namespace OriGames.SoulStonesForAll
                     {
                         Log($"Enemy rank {__instance.EnemyRank} was found and rank bonus is {soulStonesForEnemy}");
 
-                        GivePlayerSouls(soulStonesForEnemy);
+                        GivePlayerSouls(soulStonesForEnemy, __instance.transform.position);
                     }
                 }
                 catch (Exception e)
                 {
-                    Log($"Exception in EnemyController_KillCharacter_Patch: " + e.ToString());
+                    Log($"Exception in {nameof(EnemyController_KillCharacter_Patch)}: " + e.ToString());
+                }
+                
+            }
+        }
+
+        [HarmonyPatch(typeof(SoulDrop), nameof(SoulDrop.Collect))]
+        public static class SoulDrop_Collect_Patch
+        {
+            private static void Prefix(GameObject collector, SoulDrop __instance)
+            {
+                try
+                {
+                    Log($"Drop value {Economy_EV.GetItemDropValue(__instance.ItemDropType)}.   Value override {__instance.ValueOverride}");
+                }
+                catch (Exception e)
+                {
+                    Log($"Exception in {nameof(SoulDrop_Collect_Patch)}: " + e.ToString());
                 }
                 
             }
         }
         
-        private static void GivePlayerSouls(float amount)
+        private static ItemDropManager itemDropManagerInstance;
+
+        [HarmonyPatch(typeof(ItemDropManager), nameof(ItemDropManager.Initialize))]
+        public static class ItemDropManager_Initialize_Patch
+        {
+            private static void Postfix(ItemDropManager __instance)
+            {
+                try
+                {
+                    itemDropManagerInstance = __instance;
+                    
+                    Log($"Initialized ItemDropManager with {itemDropManagerInstance}");
+                }
+                catch (Exception e)
+                {
+                    Log($"Exception in {nameof(ItemDropManager_Initialize_Patch)}: " + e.ToString());
+                }
+                
+            }
+        }
+        
+        private static void GivePlayerSouls(float amount, Vector3 position)
         {
             try
             {
-                Log($"Giving player souls {amount}. FakeSoulCounter_STATIC was {SoulDrop.FakeSoulCounter_STATIC} before assigning. Drop value is {Economy_EV.GetItemDropValue(ItemDropType.Soul)}");
+                var intAmount = Mathf.CeilToInt(amount);
                 
-                SoulDrop.FakeSoulCounter_STATIC = -(int)amount;
-            
-                ItemDropManager.DropItem(ItemDropType.Soul, (int)amount, Vector3.down, true, true, true);
-            
-                Messenger<GameMessenger, GameEvent>.Broadcast(GameEvent.SoulChanged, (MonoBehaviour) null, (EventArgs) null);
+                Log($"Giving player souls {intAmount}. Souls collected: {SaveManager.ModeSaveData.MiscSoulCollected}");
+                
+                var itemDropManagerType = typeof(ItemDropManager);
+                
+                var internalDropItemMethod = itemDropManagerType.GetMethod(nameof(ItemDropManager.Internal_DropItem), BindingFlags.NonPublic | BindingFlags.Instance);
+
+                object[] parameters = { ItemDropType.Soul, intAmount, position, false, true, false, true };
+
+                internalDropItemMethod.Invoke(itemDropManagerInstance, parameters);
+                
+                SaveManager.ModeSaveData.MiscSoulCollected += intAmount;
+                
+                Log($"Gave player souls {intAmount}. Souls collected after that: {SaveManager.ModeSaveData.MiscSoulCollected}");
             }
             catch (Exception e)
             {
                 Log($"Exception in GivePlayerSouls: " + e.ToString());
             }
         }
-
+        
         private static void Log(string message, bool error = true)
         {
             WobPlugin.Log($"{DateTime.Now}: " + message, error);
