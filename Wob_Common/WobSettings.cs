@@ -67,12 +67,13 @@ namespace Wob_Common {
         /// </summary>
         /// <param name="keys">Object defining the section and setting names for the config item.</param>
         /// <returns>Returns <see langword="true"/> if a setting exists, otherwise <see langword="false"/>.</returns>
-        public static bool Exists( ConfigDefinition keys ) {
+        public static bool Exists( ConfigDefinition keys )
+        {
             if( keys != null ) {
                 return Instance.Entries.ContainsKey( GetFullKey( keys ) );
-            } else {
-                return false;
             }
+
+            return false;
         }
 
         /// <summary>
@@ -82,18 +83,22 @@ namespace Wob_Common {
         /// <param name="keys">Object defining the section and setting names for the config item.</param>
         /// <param name="defaultValue">The value to be returned if a matching config item cannot be read.</param>
         /// <returns>The value read from the config file, or the default value parameter.</returns>
-        public static T Get<T>( ConfigDefinition keys, T defaultValue ) {
-            if( keys != null ) {
-                if( Instance.Entries.TryGetValue( GetFullKey( keys ), out Entry item ) ) {
-                    return item.Get( defaultValue );
-                } else {
-                    WobPlugin.Log( "WARNING: Setting not found for " + GetFullKey( keys ) );
-                    return defaultValue;
+        public static T Get<T>(ConfigDefinition keys, T defaultValue) {
+            WobPlugin.Log($"Getting setting for {keys.Section}/{keys.Key} expecting type {typeof(T).Name}");
+            if (keys != null) {
+                string fullKey = GetFullKey(keys);
+                WobPlugin.Log($"Full key generated: {fullKey}");
+                if (Instance.Entries.TryGetValue(fullKey, out Entry item)) {
+                    WobPlugin.Log($"Found entry for {fullKey}, attempting to retrieve value as {typeof(T).Name}");
+                    return item.Get(defaultValue);
                 }
-            } else {
-                WobPlugin.Log( "ERROR: Attempt to get value from null key", WobPlugin.ERROR );
+
+                WobPlugin.Log($"WARNING: Setting not found for {fullKey}");
                 return defaultValue;
             }
+
+            WobPlugin.Log("ERROR: Attempt to get value from null key", WobPlugin.ERROR);
+            return defaultValue;
         }
         /// <summary>
         /// Read the value of a config item, using the provided section and setting names.
@@ -219,27 +224,30 @@ namespace Wob_Common {
             /// <typeparam name="T">The return type of the value. It will be safely cast to a larger ranged type if not a perfect match for the underlying type.</typeparam>
             /// <param name="defaultValue">The value to be returned in case of any errors reading the value from the config item.</param>
             /// <returns>The value read from the config file, or the default value parameter.</returns>
-            public T Get<T>( T defaultValue ) {
-                if( this.ConfigEntry == null ) {
-                    WobPlugin.Log( "ERROR: Underlying config enrty not created for " + this.FullKey, WobPlugin.ERROR );
+            public T Get<T>(T defaultValue) {
+                if (this.ConfigEntry == null) {
+                    WobPlugin.Log($"ERROR: Config entry not created for {this.FullKey}", WobPlugin.ERROR);
                     return defaultValue;
-                } else {
-                    T value = defaultValue;
-                    // Check the data type being requested matches the target data type
-                    if( typeof( T ) == this.DataType ) {
-                        // Request and target are same data type, so return the value
-                        value = (T)this.GetValue();
+                }
+
+                object value = this.GetValue();
+                Type actualType = value.GetType();
+                WobPlugin.Log($"Attempting to get value for key {this.FullKey}: Expected type {typeof(T).Name}, Actual type {actualType.Name}, Value: {value}");
+
+                try {
+                    if (actualType == typeof(T)) {
+                        return (T)value;
                     } else {
-                        // Types don't match, so check the list of safe casts of numeric types
-                        if( safeCasts.TryGetValue( typeof( T ), out HashSet<Type> safeCastList ) && safeCastList.Contains( this.DataType ) ) {
-                            // This is a safe cast, so return the value
-                            value = (T)Convert.ChangeType( this.GetValue(), typeof( T ) );
-                        } else {
-                            // Can't get the value, so log an error, and leave the return value as the default from the parameter
-                            WobPlugin.Log( "ERROR: Attempt to get setting " + this.FullKey + " as " + typeof( T ) + " but it is " + this.DataType, WobPlugin.ERROR );
-                        }
+                        // Log before conversion attempt
+                        WobPlugin.Log($"Attempting conversion: {this.FullKey} from {actualType.Name} to {typeof(T).Name}");
+                        return (T)Convert.ChangeType(value, typeof(T));
                     }
-                    return value;
+                } catch (InvalidCastException ex) {
+                    WobPlugin.Log($"Invalid cast when trying to get {this.FullKey}: {ex.Message}", WobPlugin.ERROR);
+                    return defaultValue;
+                } catch (Exception ex) {
+                    WobPlugin.Log($"Unexpected error when getting {this.FullKey}: {ex.Message}", WobPlugin.ERROR);
+                    return defaultValue;
                 }
             }
 
@@ -453,13 +461,14 @@ namespace Wob_Common {
             /// </summary>
             /// <param name="acceptedValues">Specific values restriction. Value of <see langword="null"/> for no restriction.</param>
             /// <returns>Object containing the config reader enforced restrictions, or <see langword="null"/> for no restrictions.</returns>
-            protected AcceptableValueBase GetAcceptable( string[] acceptedValues ) {
+            protected AcceptableValueBase GetAcceptable( string[] acceptedValues )
+            {
                 if( acceptedValues != null ) {
                     return new AcceptableValueList<string>( acceptedValues );
-                } else {
-                    WobPlugin.Log( "WARNING: No validation for " + this.FullKey );
-                    return null;
                 }
+
+                WobPlugin.Log( "WARNING: No validation for " + this.FullKey );
+                return null;
             }
         }
 
@@ -737,12 +746,13 @@ namespace Wob_Common {
             /// <param name="internalType">Internal type to use for config key lookup.</param>
             /// <param name="statName">Name of the stat without prefix.</param>
             /// <returns>Object containing the constructed names.</returns>
-            public ConfigDefinition Get( T internalType, string statName ) {
+            public ConfigDefinition Get( T internalType, string statName )
+            {
                 if( this.configNames.TryGetValue( internalType, out (string Section, string StatPrefix) configKey ) ) {
                     return new ConfigDefinition( configKey.Section, configKey.StatPrefix + statName );
-                } else {
-                    return null;
                 }
+
+                return null;
             }
 
             /// <summary>
@@ -837,12 +847,13 @@ namespace Wob_Common {
             /// </summary>
             /// <param name="internalType">Internal type to use for config file lookup.</param>
             /// <returns>Reference to the file.</returns>
-            public ConfigFile Get( T internalType ) {
+            public ConfigFile Get( T internalType )
+            {
                 if( this.configNames.TryGetValue( internalType, out (string Name, ConfigFile File) configFile ) ) {
                     return configFile.File;
-                } else {
-                    return null;
                 }
+
+                return null;
             }
 
             /// <summary>
