@@ -10,6 +10,7 @@ namespace OriGames.SoulStonesForAll
     using System.Collections.Generic;
     using System.Reflection;
     using System.Reflection.Emit;
+    using System.Threading.Tasks;
 
     using BepInEx.Configuration;
 
@@ -20,7 +21,7 @@ namespace OriGames.SoulStonesForAll
     [BepInPlugin("OriGames.SoulStonesForAll", "Soul Stones For All Mod", "1.0.0")]
     public partial class SoulStonesForAll : BaseUnityPlugin
     {
-        private readonly static Dictionary<EnemyRank, float> RankBonus = new Dictionary<EnemyRank, float>();
+        private readonly static Dictionary<EnemyRank, int> RankBonus = new Dictionary<EnemyRank, int>();
         
         private const string SETTINGS_BOSS_SOULS_GAIN = "BossBonus";
         private const string SETTINGS_MINI_BOSS_BONUS = "MiniBossBonus";
@@ -30,6 +31,9 @@ namespace OriGames.SoulStonesForAll
         private const string SETTINGS_CHEST_BONUS = "ChestBonus";
         private const string SETTINGS_EVERYTHING_BONUS = "EverythingBonus";
         
+        private static ItemDropManager itemDropManagerInstance;
+        private static MinimapHUDController minimapHUDControllerInstance;
+
         private readonly static HashSet<EnemyType> Bosses = new HashSet<EnemyType> {
             /* Lamech  */ EnemyType.SpellswordBoss,
             /* Pirates */ EnemyType.SkeletonBossA, EnemyType.SkeletonBossB,
@@ -58,18 +62,16 @@ namespace OriGames.SoulStonesForAll
                     new WobSettings.Num<int>(SETTINGS_EVERYTHING_BONUS, "Increases amount of soul stones by this value every time they drop", 0, 1, bounds: (0, 1000000)),
                 });
                 
-                Log($"Setting {WobSettings.Get(SETTINGS_BOSS_SOULS_GAIN, 0f)}");
-                
-                RankBonus.Add(EnemyRank.Basic, WobSettings.Get(SETTINGS_TIER_1_BONUS, 0f));
-                RankBonus.Add(EnemyRank.Advanced, WobSettings.Get(SETTINGS_TIER_2_BONUS, 0f));
-                RankBonus.Add(EnemyRank.Expert, WobSettings.Get(SETTINGS_TIER_3_BONUS, 0f));
-                RankBonus.Add(EnemyRank.Miniboss, WobSettings.Get(SETTINGS_MINI_BOSS_BONUS, 0f));
+                RankBonus.Add(EnemyRank.Basic, WobSettings.Get(SETTINGS_TIER_1_BONUS, 0));
+                RankBonus.Add(EnemyRank.Advanced, WobSettings.Get(SETTINGS_TIER_2_BONUS, 0));
+                RankBonus.Add(EnemyRank.Expert, WobSettings.Get(SETTINGS_TIER_3_BONUS, 0));
+                RankBonus.Add(EnemyRank.Miniboss, WobSettings.Get(SETTINGS_MINI_BOSS_BONUS, 0));
             
                 WobPlugin.Patch();
                 
                 Log("WobPlugin patched");
 
-                SetBossesSoulsGain(WobSettings.Get(SETTINGS_BOSS_SOULS_GAIN, 100f));
+                SetBossesSoulsGain(WobSettings.Get(SETTINGS_BOSS_SOULS_GAIN, 100));
             
                 Log("Mod fully initialised");
             }
@@ -98,7 +100,7 @@ namespace OriGames.SoulStonesForAll
                         {
                             Log($"On chest opened 3");
 
-                            GivePlayerSouls(WobSettings.Get(SETTINGS_CHEST_BONUS, 0f), args.Chest.transform.position);
+                            GivePlayerSouls(WobSettings.Get(SETTINGS_CHEST_BONUS, 0), args.Chest.transform.position);
                         }
                     }
                 }
@@ -109,7 +111,7 @@ namespace OriGames.SoulStonesForAll
             }
         }
         
-        private static void SetBossesSoulsGain(float newValue)
+        private static void SetBossesSoulsGain(int newValue)
         {
             Log($"Set Bosses Souls Gain to {newValue}");
 
@@ -153,7 +155,7 @@ namespace OriGames.SoulStonesForAll
                 {
                     Log(__instance.EnemyType + "." + __instance.EnemyRank + " killed. Rank bonus is " + RankBonus.ContainsKey(__instance.EnemyRank));
                 
-                    if (RankBonus.TryGetValue(__instance.EnemyRank, out float soulStonesForEnemy))
+                    if (RankBonus.TryGetValue(__instance.EnemyRank, out int soulStonesForEnemy))
                     {
                         Log($"Enemy rank {__instance.EnemyRank} was found and rank bonus is {soulStonesForEnemy}");
 
@@ -167,26 +169,7 @@ namespace OriGames.SoulStonesForAll
                 
             }
         }
-
-        [HarmonyPatch(typeof(SoulDrop), nameof(SoulDrop.Collect))]
-        public static class SoulDrop_Collect_Patch
-        {
-            private static void Prefix(GameObject collector, SoulDrop __instance)
-            {
-                try
-                {
-                    Log($"Drop value {Economy_EV.GetItemDropValue(__instance.ItemDropType)}.   Value override {__instance.ValueOverride}");
-                }
-                catch (Exception e)
-                {
-                    Log($"Exception in {nameof(SoulDrop_Collect_Patch)}: " + e.ToString());
-                }
-                
-            }
-        }
         
-        private static ItemDropManager itemDropManagerInstance;
-
         [HarmonyPatch(typeof(ItemDropManager), nameof(ItemDropManager.Initialize))]
         public static class ItemDropManager_Initialize_Patch
         {
@@ -206,25 +189,62 @@ namespace OriGames.SoulStonesForAll
             }
         }
         
-        private static void GivePlayerSouls(float amount, Vector3 position)
+        [HarmonyPatch(typeof(MinimapHUDController), nameof(MinimapHUDController.OnSoulChanged))]
+        public static class MinimapHUDController_OnSoulChanged_Patch
+        {
+            private static void Prefix(MinimapHUDController __instance)
+            {
+                try
+                {
+                    Log($"MinimapHUDController_OnSoulChanged_Patch Souls_EV.GetTotalSoulsCollected {Souls_EV.GetTotalSoulsCollected(SaveManager.PlayerSaveData.GameModeType, true)}");
+                    Log($"MinimapHUDController_OnSoulChanged_Patch SoulDrop.FakeSoulCounter_STATIC {SoulDrop.FakeSoulCounter_STATIC}");
+                    
+                    var previousSoulsField = AccessTools.Field(typeof(MinimapHUDController), nameof(MinimapHUDController.m_previousSoulAmount));
+
+                    Log($"MinimapHUDController_OnSoulChanged_Patch m_previousSoulAmount {previousSoulsField.GetValue(minimapHUDControllerInstance)}");
+
+                    //SoulDrop.FakeSoulCounter_STATIC = 0;
+                }
+                catch (Exception e)
+                {
+                    Log($"Exception in {nameof(ItemDropManager_Initialize_Patch)}: " + e.ToString());
+                }
+            }
+            
+            private static void Finalizer(Exception __exception)
+            {
+                if (__exception != null)
+                {
+                    Log($"Exception in {nameof(MinimapHUDController_OnSoulChanged_Patch)}: " + __exception.ToString());
+                }
+            }
+        }
+
+        private static void GivePlayerSouls(int amount, Vector3 position)
         {
             try
             {
-                var intAmount = Mathf.CeilToInt(amount);
+                if (amount <= 0)
+                {
+                    return;
+                }
                 
-                Log($"Giving player souls {intAmount}. Souls collected: {SaveManager.ModeSaveData.MiscSoulCollected}");
-                
+                Log($"Giving player souls {amount}. Souls collected: {SaveManager.ModeSaveData.MiscSoulCollected}");
+                SoulDrop.FakeSoulCounter_STATIC += amount;
+                SaveManager.ModeSaveData.MiscSoulCollected += amount;
+
                 var itemDropManagerType = typeof(ItemDropManager);
                 
                 var internalDropItemMethod = itemDropManagerType.GetMethod(nameof(ItemDropManager.Internal_DropItem), BindingFlags.NonPublic | BindingFlags.Instance);
 
-                object[] parameters = { ItemDropType.Soul, intAmount, position, false, true, false, true };
+                object[] parameters = { ItemDropType.Soul, amount, position, false, true, false, true };
 
                 internalDropItemMethod.Invoke(itemDropManagerInstance, parameters);
                 
-                SaveManager.ModeSaveData.MiscSoulCollected += intAmount;
+                Log($"Gave player souls {amount}. Souls collected after that: {SaveManager.ModeSaveData.MiscSoulCollected}");
                 
-                Log($"Gave player souls {intAmount}. Souls collected after that: {SaveManager.ModeSaveData.MiscSoulCollected}");
+                Log($"=========EXIT GivePlayerSouls");
+
             }
             catch (Exception e)
             {
