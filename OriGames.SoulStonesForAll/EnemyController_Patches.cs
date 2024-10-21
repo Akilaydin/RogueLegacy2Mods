@@ -4,6 +4,7 @@ namespace OriGames.SoulStonesForAll
 
     using HarmonyLib;
 
+    
     [HarmonyPatch(typeof(EnemyController), nameof(EnemyController.KillCharacter))]
     public static class EnemyController_Patches
     {
@@ -12,15 +13,31 @@ namespace OriGames.SoulStonesForAll
             try
             {
                 SoulStonesForAll.Log(__instance.EnemyType + "." + __instance.EnemyRank + " killed. Rank bonus is " + SoulStonesForAll.EnemyBonusByRank.ContainsKey(__instance.EnemyRank));
+
+                if (__instance.DisableDeath)
+                {
+                    //todo: check if this is the right way to disable reward for trait on immortality
+                    SoulStonesForAll.Log($"Not giving bonus to enemy with disabled death");
+
+                    return;
+                }
+                
+                if (Constants.Bosses.Contains(__instance.EnemyType))
+                {
+                    SoulStonesForAll.Log($"Not giving bonus to BOSS with type {__instance.EnemyType}");
+
+                    return;
+                }
+
+                if (Constants.EnemiesToExcludeFromBonus.Contains(__instance.EnemyType))
+                {
+                    SoulStonesForAll.Log($"Not giving bonus to excluded enemy with type {__instance.EnemyType}");
+
+                    return;
+                }
                 
                 if (SoulStonesForAll.EnemyBonusByRank.TryGetValue(__instance.EnemyRank, out int soulStonesForEnemy))
                 {
-                    //Remove for BouncySpike.Basic killed. Rank bonus is True
-                    //Target.Basic killed. Rank bonus is True
-                    //CaveBoss.Basic killed. Rank bonus is True AND OTHER BOSSES
-                    //Skeleton.Miniboss killed. Rank bonus is True
-                    //TO CHECK IF PLAYER IS IN BOSS BATTLE OR TRIAL WITH TARGETS
-                    //todo: Disable for boss fights. Check for target, bouncySpike, trait on immortality
                     SoulStonesForAll.Log($"Enemy rank {__instance.EnemyRank} was found and rank bonus is {soulStonesForEnemy}");
 
                     SoulStonesForAll.GivePlayerSouls(soulStonesForEnemy, __instance.transform.position);
@@ -30,7 +47,6 @@ namespace OriGames.SoulStonesForAll
             {
                 SoulStonesForAll.Log($"Exception in {nameof(EnemyController_Patches)}: " + e.ToString());
             }
-                
         }
     }
 }

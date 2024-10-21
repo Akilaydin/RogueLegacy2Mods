@@ -14,7 +14,8 @@
         public const string SETTINGS_FAIRY_CHEST_BONUS = "FairyChestBonus";
         public const string SETTINGS_EVERYTHING_BONUS = "EverythingBonus";
         
-        readonly public static HashSet<EnemyType> Bosses = new HashSet<EnemyType> {
+        readonly public static HashSet<EnemyType> Bosses = new HashSet<EnemyType> 
+        {
             /* Lamech  */ EnemyType.SpellswordBoss,
             /* Pirates */ EnemyType.SkeletonBossA, EnemyType.SkeletonBossB,
             /* Naamah  */ EnemyType.DancingBoss,
@@ -23,6 +24,13 @@
             /* Tubal   */ EnemyType.CaveBoss,
             /* Jonah   */ EnemyType.TraitorBoss,
             /* Cain    */ EnemyType.FinalBoss,
+        };
+        
+        readonly public static HashSet<EnemyType> EnemiesToExcludeFromBonus = new HashSet<EnemyType> 
+        {
+            EnemyType.Target, 
+            EnemyType.Dummy, 
+            EnemyType.BouncySpike,
         };
     }
 }

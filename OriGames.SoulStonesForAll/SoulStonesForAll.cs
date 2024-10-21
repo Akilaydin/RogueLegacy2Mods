@@ -2,6 +2,9 @@
 
 using Wob_Common;
 
+//note: IMPORTANT NOTE: Patches moved to separate classes, but still use [HarmonyPatch] overload with both class and method names.
+//See this issue for more info: https://discord.com/channels/131466550938042369/361891646742462467/1297901342701912168
+
 namespace OriGames.SoulStonesForAll
 {
     using System;
