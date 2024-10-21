@@ -1,7 +1,5 @@
 ﻿using BepInEx;
 
-using HarmonyLib;
-
 using Wob_Common;
 
 namespace OriGames.SoulStonesForAll
@@ -9,237 +7,40 @@ namespace OriGames.SoulStonesForAll
     using System;
     using System.Collections.Generic;
     using System.Reflection;
-    using System.Reflection.Emit;
-    using System.Threading.Tasks;
-
-    using BepInEx.Configuration;
-
-    using GameEventTracking;
 
     using UnityEngine;
 
     [BepInPlugin("OriGames.SoulStonesForAll", "Soul Stones For All Mod", "1.0.0")]
     public partial class SoulStonesForAll : BaseUnityPlugin
     {
-        private readonly static Dictionary<EnemyRank, int> EnemyBonusByRank = new Dictionary<EnemyRank, int>();
-        private readonly static Dictionary<SpecialItemType, int> ChestBonusByType = new Dictionary<SpecialItemType, int>();
+        readonly public static Dictionary<EnemyRank, int> EnemyBonusByRank = new Dictionary<EnemyRank, int>();
+        readonly public static Dictionary<SpecialItemType, int> ChestBonusByType = new Dictionary<SpecialItemType, int>();
         
-        private const string SETTINGS_BOSS_SOULS_GAIN = "BossBonus";
-        private const string SETTINGS_MINI_BOSS_BONUS = "MiniBossBonus";
-        private const string SETTINGS_TIER_1_BONUS = "Tier1Bonus";
-        private const string SETTINGS_TIER_2_BONUS = "Tier2Bonus";
-        private const string SETTINGS_TIER_3_BONUS = "Tier3Bonus";
-        
-        private const string SETTINGS_GOLD_CHEST_BONUS = "GoldChestBonus";
-        private const string SETTINGS_ORE_CHEST_BONUS = "OreChestBonus";
-        private const string SETTINGS_FAIRY_CHEST_BONUS = "FairyChestBonus";
-        
-        private const string SETTINGS_EVERYTHING_BONUS = "EverythingBonus";
-        
-        private static ItemDropManager itemDropManagerInstance;
-        private static MinimapHUDController minimapHUDControllerInstance;
-
-        private readonly static HashSet<EnemyType> Bosses = new HashSet<EnemyType> {
-            /* Lamech  */ EnemyType.SpellswordBoss,
-            /* Pirates */ EnemyType.SkeletonBossA, EnemyType.SkeletonBossB,
-            /* Naamah  */ EnemyType.DancingBoss,
-            /* Enoch   */ EnemyType.StudyBoss, EnemyType.MimicChestBoss,
-            /* Irad    */ EnemyType.EyeballBoss_Left, EnemyType.EyeballBoss_Right, EnemyType.EyeballBoss_Bottom, EnemyType.EyeballBoss_Middle,
-            /* Tubal   */ EnemyType.CaveBoss,
-            /* Jonah   */ EnemyType.TraitorBoss,
-            /* Cain    */ EnemyType.FinalBoss,
-        };
-
         protected void Awake()
         {
             WobPlugin.Initialise(this, Logger);
             
             try
             {
-                WobSettings.Add(new WobSettings.Entry[]
-                {
-                    new WobSettings.Num<int>(SETTINGS_TIER_1_BONUS, "Get this amount of soul stones from tier 1 (basic) variant enemies", 0, 1),
-                    new WobSettings.Num<int>(SETTINGS_TIER_2_BONUS, "Get this amount of soul stones from tier 2 (advanced) variant enemies", 0, 1),
-                    new WobSettings.Num<int>(SETTINGS_TIER_3_BONUS, "Get this amount of soul stones from tier 3 (commander) variant enemies",0, 1),
-                    new WobSettings.Num<int>(SETTINGS_MINI_BOSS_BONUS, "Get this amount of soul stones from mini bosses", 0, 1),
-                    new WobSettings.Num<int>(SETTINGS_BOSS_SOULS_GAIN, "Get this amount of soul stones from bosses", 100, 1),
-                    
-                    new WobSettings.Num<int>(SETTINGS_GOLD_CHEST_BONUS, "Get this amount of soul stones for every opened gold chest", 0, 1),
-                    new WobSettings.Num<int>(SETTINGS_FAIRY_CHEST_BONUS, "Get this amount of soul stones for every opened fairy chest", 0, 1),
-                    new WobSettings.Num<int>(SETTINGS_ORE_CHEST_BONUS, "Get this amount of soul stones for every opened ore chest", 0, 1),
-                    
-                    new WobSettings.Num<int>(SETTINGS_EVERYTHING_BONUS, "Increases amount of soul stones by this value every time they drop", 0, 1),
-                });
+                InitializeSettings();
                 
-                EnemyBonusByRank.Add(EnemyRank.Basic, WobSettings.Get(SETTINGS_TIER_1_BONUS, 0));
-                EnemyBonusByRank.Add(EnemyRank.Advanced, WobSettings.Get(SETTINGS_TIER_2_BONUS, 0));
-                EnemyBonusByRank.Add(EnemyRank.Expert, WobSettings.Get(SETTINGS_TIER_3_BONUS, 0));
-                EnemyBonusByRank.Add(EnemyRank.Miniboss, WobSettings.Get(SETTINGS_MINI_BOSS_BONUS, 0));
-                
-                ChestBonusByType.Add(SpecialItemType.Gold, WobSettings.Get(SETTINGS_GOLD_CHEST_BONUS, 0));
-                ChestBonusByType.Add(SpecialItemType.Ore, WobSettings.Get(SETTINGS_ORE_CHEST_BONUS, 0));
-                ChestBonusByType.Add(SpecialItemType.Rune, WobSettings.Get(SETTINGS_FAIRY_CHEST_BONUS, 0));
-            
+                InitializeDictionaries();
+
                 WobPlugin.Patch();
                 
                 Log("WobPlugin patched");
 
-                SetBossesSoulsGain(WobSettings.Get(SETTINGS_BOSS_SOULS_GAIN, 100));
+                SetBossesSoulsGain(WobSettings.Get(Constants.SETTINGS_BOSS_SOULS_GAIN, 100));
             
-                Log("Mod fully initialised");
+                Log("Mod fully initialized");
             }
             catch (Exception e)
             {
                 Log(e.ToString());
             }
         }
-        
-        [HarmonyPatch(typeof(ItemEventTracker), nameof(ItemEventTracker.OnChestOpened))]
-        public static class ItemEventTracker_OnChestOpened_Patch
-        {
-            static void Postfix(MonoBehaviour sender, EventArgs eventArgs)
-            {
-                try
-                {
-                    Log($"On chest opened 1");
 
-                    if (eventArgs is ChestOpenedEventArgs args)
-                    {
-                        Log($"On chest opened 2");
-
-                        if (ChestBonusByType.TryGetValue(args.SpecialItemType, out int bonus))
-                        {
-                            Log($"On chest opened 3");
-                            
-                            //todo: Disable for boss fights
-
-                            GivePlayerSouls(bonus, args.Chest.transform.position);
-                        }
-                    }
-                }
-                catch (Exception e)
-                {
-                    Log($"Exception in {nameof(ItemEventTracker_OnChestOpened_Patch)}: {e.ToString()}");
-                }
-            }
-        }
-        
-        private static void SetBossesSoulsGain(int newValue)
-        {
-            Log($"Set Bosses Souls Gain to {newValue}");
-
-            var keys = new List<BossID>(Souls_EV.BOSS_SOUL_DROP_TABLE.Keys);
-
-            foreach (var bossID in keys)
-            {
-                Souls_EV.BOSS_SOUL_DROP_TABLE[bossID] = new Vector2Int((int)newValue, (int)newValue);
-            }
-        }
-
-        [HarmonyPatch(typeof(Economy_EV), "GetItemDropValue")]
-        public static class EconomyEV_GetItemDropValue_Patch
-        {
-            private static void Postfix(ItemDropType itemDrop, bool getGoldValueOnly, ref int __result)
-            {
-                try
-                {
-                    if (itemDrop == ItemDropType.Soul && !getGoldValueOnly)
-                    {
-                        //float increment = WobSettings.Get(SETTINGS_EVERYTHING_BONUS, 0);
-
-                        //__result += (int)increment;
-                    
-                        //Log($"EconomyEV_GetItemDropValue_Patch increment was {increment} and final result was {__result}");
-                    }
-                }
-                catch (Exception e)
-                {
-                    Log($"Exception in EconomyEV_GetItemDropValue_Patch: " + e.ToString());
-                }
-            }
-        }
-        
-        [HarmonyPatch(typeof(EnemyController), "KillCharacter")]
-        public static class EnemyController_KillCharacter_Patch
-        {
-            private static void Postfix(EnemyController __instance)
-            {
-                try
-                {
-                    Log(__instance.EnemyType + "." + __instance.EnemyRank + " killed. Rank bonus is " + EnemyBonusByRank.ContainsKey(__instance.EnemyRank));
-                
-                    if (EnemyBonusByRank.TryGetValue(__instance.EnemyRank, out int soulStonesForEnemy))
-                    {
-                        //Remove for BouncySpike.Basic killed. Rank bonus is True
-                        //Target.Basic killed. Rank bonus is True
-                        //CaveBoss.Basic killed. Rank bonus is True AND OTHER BOSSES
-                        //Skeleton.Miniboss killed. Rank bonus is True
-                        //TO CHECK IF PLAYER IS IN BOSS BATTLE OR TRIAL WITH TARGETS
-                        //todo: Disable for boss fights. Check for target, bouncySpike, trait on immortality
-                        Log($"Enemy rank {__instance.EnemyRank} was found and rank bonus is {soulStonesForEnemy}");
-
-                        GivePlayerSouls(soulStonesForEnemy, __instance.transform.position);
-                    }
-                }
-                catch (Exception e)
-                {
-                    Log($"Exception in {nameof(EnemyController_KillCharacter_Patch)}: " + e.ToString());
-                }
-                
-            }
-        }
-        
-        [HarmonyPatch(typeof(ItemDropManager), nameof(ItemDropManager.Initialize))]
-        public static class ItemDropManager_Initialize_Patch
-        {
-            private static void Postfix(ItemDropManager __instance)
-            {
-                try
-                {
-                    itemDropManagerInstance = __instance;
-                    
-                    Log($"Initialized ItemDropManager with {itemDropManagerInstance}");
-                }
-                catch (Exception e)
-                {
-                    Log($"Exception in {nameof(ItemDropManager_Initialize_Patch)}: " + e.ToString());
-                }
-                
-            }
-        }
-        
-        [HarmonyPatch(typeof(MinimapHUDController), nameof(MinimapHUDController.OnSoulChanged))]
-        public static class MinimapHUDController_OnSoulChanged_Patch
-        {
-            private static void Prefix(MinimapHUDController __instance)
-            {
-                try
-                {
-                    Log($"MinimapHUDController_OnSoulChanged_Patch Souls_EV.GetTotalSoulsCollected {Souls_EV.GetTotalSoulsCollected(SaveManager.PlayerSaveData.GameModeType, true)}");
-                    Log($"MinimapHUDController_OnSoulChanged_Patch SoulDrop.FakeSoulCounter_STATIC {SoulDrop.FakeSoulCounter_STATIC}");
-                    
-                    var previousSoulsField = AccessTools.Field(typeof(MinimapHUDController), nameof(MinimapHUDController.m_previousSoulAmount));
-
-                    Log($"MinimapHUDController_OnSoulChanged_Patch m_previousSoulAmount {previousSoulsField.GetValue(minimapHUDControllerInstance)}");
-
-                    //SoulDrop.FakeSoulCounter_STATIC = 0;
-                }
-                catch (Exception e)
-                {
-                    Log($"Exception in {nameof(ItemDropManager_Initialize_Patch)}: " + e.ToString());
-                }
-            }
-            
-            private static void Finalizer(Exception __exception)
-            {
-                if (__exception != null)
-                {
-                    Log($"Exception in {nameof(MinimapHUDController_OnSoulChanged_Patch)}: " + __exception.ToString());
-                }
-            }
-        }
-
-        private static void GivePlayerSouls(int amount, Vector3 position)
+        public static void GivePlayerSouls(int amount, Vector3 position)
         {
             try
             {
@@ -248,7 +49,7 @@ namespace OriGames.SoulStonesForAll
                     return;
                 }
                 
-                Log($"Giving player souls {amount}. Souls collected: {SaveManager.ModeSaveData.MiscSoulCollected}");
+                Log($"Giving player souls {amount}. Souls collected before: {SaveManager.ModeSaveData.MiscSoulCollected}");
                 SoulDrop.FakeSoulCounter_STATIC += amount;
                 SaveManager.ModeSaveData.MiscSoulCollected += amount;
 
@@ -258,9 +59,9 @@ namespace OriGames.SoulStonesForAll
 
                 object[] parameters = { ItemDropType.Soul, amount, position, false, true, false, true };
 
-                internalDropItemMethod.Invoke(itemDropManagerInstance, parameters);
+                internalDropItemMethod.Invoke(ItemDropManager_Patches.ItemDropManagerInstance, parameters);
                 
-                Log($"Gave player souls {amount}. Souls collected after that: {SaveManager.ModeSaveData.MiscSoulCollected}");
+                Log($"Gave player souls {amount}. Souls collected after: {SaveManager.ModeSaveData.MiscSoulCollected}");
                 
                 Log($"=========EXIT GivePlayerSouls");
 
@@ -271,9 +72,52 @@ namespace OriGames.SoulStonesForAll
             }
         }
         
-        private static void Log(string message, bool error = true)
+        private static void SetBossesSoulsGain(int newValue)
+        {
+            Log($"Set Bosses Souls Gain to {newValue}");
+            
+            var keys = new List<BossID>(Souls_EV.BOSS_SOUL_DROP_TABLE.Keys);
+
+            foreach (var bossID in keys)
+            {
+                Souls_EV.BOSS_SOUL_DROP_TABLE[bossID] = new Vector2Int((int)newValue, (int)newValue);
+            }
+        }
+        
+        private static void InitializeDictionaries()
+        {
+            EnemyBonusByRank.Add(EnemyRank.Basic, WobSettings.Get(Constants.SETTINGS_TIER_1_BONUS, 0));
+            EnemyBonusByRank.Add(EnemyRank.Advanced, WobSettings.Get(Constants.SETTINGS_TIER_2_BONUS, 0));
+            EnemyBonusByRank.Add(EnemyRank.Expert, WobSettings.Get(Constants.SETTINGS_TIER_3_BONUS, 0));
+            EnemyBonusByRank.Add(EnemyRank.Miniboss, WobSettings.Get(Constants.SETTINGS_MINI_BOSS_BONUS, 0));
+                
+            ChestBonusByType.Add(SpecialItemType.Gold, WobSettings.Get(Constants.SETTINGS_GOLD_CHEST_BONUS, 0));
+            ChestBonusByType.Add(SpecialItemType.Ore, WobSettings.Get(Constants.SETTINGS_ORE_CHEST_BONUS, 0));
+            ChestBonusByType.Add(SpecialItemType.Rune, WobSettings.Get(Constants.SETTINGS_FAIRY_CHEST_BONUS, 0));
+        }
+
+        private static void InitializeSettings()
+        {
+            WobSettings.Add(new WobSettings.Entry[]
+            {
+                new WobSettings.Num<int>(Constants.SETTINGS_TIER_1_BONUS, "Get this amount of soul stones from tier 1 (basic) variant enemies", 0, 1),
+                new WobSettings.Num<int>(Constants.SETTINGS_TIER_2_BONUS, "Get this amount of soul stones from tier 2 (advanced) variant enemies", 0, 1),
+                new WobSettings.Num<int>(Constants.SETTINGS_TIER_3_BONUS, "Get this amount of soul stones from tier 3 (commander) variant enemies",0, 1),
+                new WobSettings.Num<int>(Constants.SETTINGS_MINI_BOSS_BONUS, "Get this amount of soul stones from mini bosses", 0, 1),
+                new WobSettings.Num<int>(Constants.SETTINGS_BOSS_SOULS_GAIN, "Get this amount of soul stones from bosses", 100, 1),
+                    
+                new WobSettings.Num<int>(Constants.SETTINGS_GOLD_CHEST_BONUS, "Get this amount of soul stones for every opened gold chest", 0, 1),
+                new WobSettings.Num<int>(Constants.SETTINGS_FAIRY_CHEST_BONUS, "Get this amount of soul stones for every opened fairy chest", 0, 1),
+                new WobSettings.Num<int>(Constants.SETTINGS_ORE_CHEST_BONUS, "Get this amount of soul stones for every opened ore chest", 0, 1),
+                    
+                new WobSettings.Num<int>(Constants.SETTINGS_EVERYTHING_BONUS, "Increases amount of soul stones by this value every time they drop", 0, 1),
+            });
+        }
+                
+        public static void Log(string message, bool error = true)
         {
             WobPlugin.Log($"{DateTime.Now}: " + message, error);
         }
     }
+
 }
