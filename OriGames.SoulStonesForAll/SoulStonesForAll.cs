@@ -21,14 +21,19 @@ namespace OriGames.SoulStonesForAll
     [BepInPlugin("OriGames.SoulStonesForAll", "Soul Stones For All Mod", "1.0.0")]
     public partial class SoulStonesForAll : BaseUnityPlugin
     {
-        private readonly static Dictionary<EnemyRank, int> RankBonus = new Dictionary<EnemyRank, int>();
+        private readonly static Dictionary<EnemyRank, int> EnemyBonusByRank = new Dictionary<EnemyRank, int>();
+        private readonly static Dictionary<SpecialItemType, int> ChestBonusByType = new Dictionary<SpecialItemType, int>();
         
         private const string SETTINGS_BOSS_SOULS_GAIN = "BossBonus";
         private const string SETTINGS_MINI_BOSS_BONUS = "MiniBossBonus";
         private const string SETTINGS_TIER_1_BONUS = "Tier1Bonus";
         private const string SETTINGS_TIER_2_BONUS = "Tier2Bonus";
         private const string SETTINGS_TIER_3_BONUS = "Tier3Bonus";
-        private const string SETTINGS_CHEST_BONUS = "ChestBonus";
+        
+        private const string SETTINGS_GOLD_CHEST_BONUS = "GoldChestBonus";
+        private const string SETTINGS_ORE_CHEST_BONUS = "OreChestBonus";
+        private const string SETTINGS_FAIRY_CHEST_BONUS = "FairyChestBonus";
+        
         private const string SETTINGS_EVERYTHING_BONUS = "EverythingBonus";
         
         private static ItemDropManager itemDropManagerInstance;
@@ -53,19 +58,27 @@ namespace OriGames.SoulStonesForAll
             {
                 WobSettings.Add(new WobSettings.Entry[]
                 {
-                    new WobSettings.Num<int>(SETTINGS_TIER_1_BONUS, "Get this amount of soul stones from tier 1 (basic) variant enemies", 0, 1, bounds: (0, 1000000)),
-                    new WobSettings.Num<int>(SETTINGS_TIER_2_BONUS, "Get this amount of soul stones from tier 2 (advanced) variant enemies", 0, 1, bounds: (0, 1000000)),
-                    new WobSettings.Num<int>(SETTINGS_TIER_3_BONUS, "Get this amount of soul stones from tier 3 (commander) variant enemies",0, 1, bounds: (0, 1000000)),
-                    new WobSettings.Num<int>(SETTINGS_MINI_BOSS_BONUS, "Get this amount of soul stones from mini bosses", 0, 1, bounds: (0, 1000000)),
-                    new WobSettings.Num<int>(SETTINGS_BOSS_SOULS_GAIN, "Get this amount of soul stones from bosses", 100, 1, bounds: (0, 1000000)),
-                    new WobSettings.Num<int>(SETTINGS_CHEST_BONUS, "Get this amount of soul stones for every opened chest", 0, 1, bounds: (0, 1000000)),
-                    new WobSettings.Num<int>(SETTINGS_EVERYTHING_BONUS, "Increases amount of soul stones by this value every time they drop", 0, 1, bounds: (0, 1000000)),
+                    new WobSettings.Num<int>(SETTINGS_TIER_1_BONUS, "Get this amount of soul stones from tier 1 (basic) variant enemies", 0, 1),
+                    new WobSettings.Num<int>(SETTINGS_TIER_2_BONUS, "Get this amount of soul stones from tier 2 (advanced) variant enemies", 0, 1),
+                    new WobSettings.Num<int>(SETTINGS_TIER_3_BONUS, "Get this amount of soul stones from tier 3 (commander) variant enemies",0, 1),
+                    new WobSettings.Num<int>(SETTINGS_MINI_BOSS_BONUS, "Get this amount of soul stones from mini bosses", 0, 1),
+                    new WobSettings.Num<int>(SETTINGS_BOSS_SOULS_GAIN, "Get this amount of soul stones from bosses", 100, 1),
+                    
+                    new WobSettings.Num<int>(SETTINGS_GOLD_CHEST_BONUS, "Get this amount of soul stones for every opened gold chest", 0, 1),
+                    new WobSettings.Num<int>(SETTINGS_FAIRY_CHEST_BONUS, "Get this amount of soul stones for every opened fairy chest", 0, 1),
+                    new WobSettings.Num<int>(SETTINGS_ORE_CHEST_BONUS, "Get this amount of soul stones for every opened ore chest", 0, 1),
+                    
+                    new WobSettings.Num<int>(SETTINGS_EVERYTHING_BONUS, "Increases amount of soul stones by this value every time they drop", 0, 1),
                 });
                 
-                RankBonus.Add(EnemyRank.Basic, WobSettings.Get(SETTINGS_TIER_1_BONUS, 0));
-                RankBonus.Add(EnemyRank.Advanced, WobSettings.Get(SETTINGS_TIER_2_BONUS, 0));
-                RankBonus.Add(EnemyRank.Expert, WobSettings.Get(SETTINGS_TIER_3_BONUS, 0));
-                RankBonus.Add(EnemyRank.Miniboss, WobSettings.Get(SETTINGS_MINI_BOSS_BONUS, 0));
+                EnemyBonusByRank.Add(EnemyRank.Basic, WobSettings.Get(SETTINGS_TIER_1_BONUS, 0));
+                EnemyBonusByRank.Add(EnemyRank.Advanced, WobSettings.Get(SETTINGS_TIER_2_BONUS, 0));
+                EnemyBonusByRank.Add(EnemyRank.Expert, WobSettings.Get(SETTINGS_TIER_3_BONUS, 0));
+                EnemyBonusByRank.Add(EnemyRank.Miniboss, WobSettings.Get(SETTINGS_MINI_BOSS_BONUS, 0));
+                
+                ChestBonusByType.Add(SpecialItemType.Gold, WobSettings.Get(SETTINGS_GOLD_CHEST_BONUS, 0));
+                ChestBonusByType.Add(SpecialItemType.Ore, WobSettings.Get(SETTINGS_ORE_CHEST_BONUS, 0));
+                ChestBonusByType.Add(SpecialItemType.Rune, WobSettings.Get(SETTINGS_FAIRY_CHEST_BONUS, 0));
             
                 WobPlugin.Patch();
                 
@@ -94,13 +107,13 @@ namespace OriGames.SoulStonesForAll
                     {
                         Log($"On chest opened 2");
 
-                        if (args.SpecialItemType == SpecialItemType.Rune 
-                            || args.SpecialItemType == SpecialItemType.Ore 
-                            || args.SpecialItemType == SpecialItemType.Gold)
+                        if (ChestBonusByType.TryGetValue(args.SpecialItemType, out int bonus))
                         {
                             Log($"On chest opened 3");
+                            
+                            //todo: Disable for boss fights
 
-                            GivePlayerSouls(WobSettings.Get(SETTINGS_CHEST_BONUS, 0), args.Chest.transform.position);
+                            GivePlayerSouls(bonus, args.Chest.transform.position);
                         }
                     }
                 }
@@ -153,10 +166,16 @@ namespace OriGames.SoulStonesForAll
             {
                 try
                 {
-                    Log(__instance.EnemyType + "." + __instance.EnemyRank + " killed. Rank bonus is " + RankBonus.ContainsKey(__instance.EnemyRank));
+                    Log(__instance.EnemyType + "." + __instance.EnemyRank + " killed. Rank bonus is " + EnemyBonusByRank.ContainsKey(__instance.EnemyRank));
                 
-                    if (RankBonus.TryGetValue(__instance.EnemyRank, out int soulStonesForEnemy))
+                    if (EnemyBonusByRank.TryGetValue(__instance.EnemyRank, out int soulStonesForEnemy))
                     {
+                        //Remove for BouncySpike.Basic killed. Rank bonus is True
+                        //Target.Basic killed. Rank bonus is True
+                        //CaveBoss.Basic killed. Rank bonus is True AND OTHER BOSSES
+                        //Skeleton.Miniboss killed. Rank bonus is True
+                        //TO CHECK IF PLAYER IS IN BOSS BATTLE OR TRIAL WITH TARGETS
+                        //todo: Disable for boss fights. Check for target, bouncySpike, trait on immortality
                         Log($"Enemy rank {__instance.EnemyRank} was found and rank bonus is {soulStonesForEnemy}");
 
                         GivePlayerSouls(soulStonesForEnemy, __instance.transform.position);
