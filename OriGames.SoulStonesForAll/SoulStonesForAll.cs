@@ -52,7 +52,8 @@ namespace OriGames.SoulStonesForAll
                     return;
                 }
                 
-                Log($"Giving player souls {amount}. Souls collected before: {SaveManager.ModeSaveData.MiscSoulCollected}");
+                Log($"Giving player souls {amount}. TOTAL collected before: {Souls_EV.GetTotalSoulsCollected(SaveManager.PlayerSaveData.GameModeType, true)}");
+                Log($"Giving player souls {amount}. Misc Souls collected before: {SaveManager.ModeSaveData.MiscSoulCollected}");
                 SoulDrop.FakeSoulCounter_STATIC += amount;
                 SaveManager.ModeSaveData.MiscSoulCollected += amount;
 
@@ -64,14 +65,15 @@ namespace OriGames.SoulStonesForAll
 
                 internalDropItemMethod.Invoke(ItemDropManager_Patches.ItemDropManagerInstance, parameters);
                 
-                Log($"Gave player souls {amount}. Souls collected after: {SaveManager.ModeSaveData.MiscSoulCollected}");
+                Log($"Gave player souls {amount}. TOTAL collected after: {Souls_EV.GetTotalSoulsCollected(SaveManager.PlayerSaveData.GameModeType, true)}");
+                Log($"Gave player souls {amount}. Misc Souls collected after: {SaveManager.ModeSaveData.MiscSoulCollected}");
                 
                 Log($"=========EXIT GivePlayerSouls");
 
             }
             catch (Exception e)
             {
-                Log($"Exception in GivePlayerSouls: " + e.ToString());
+                Log($"Exception in {nameof(GivePlayerSouls)}: " + e.ToString());
             }
         }
         
@@ -83,7 +85,7 @@ namespace OriGames.SoulStonesForAll
 
             foreach (var bossID in keys)
             {
-                Souls_EV.BOSS_SOUL_DROP_TABLE[bossID] = new Vector2Int((int)newValue, (int)newValue);
+                Souls_EV.BOSS_SOUL_DROP_TABLE[bossID] = new Vector2Int(newValue, newValue);
             }
         }
         
@@ -112,8 +114,6 @@ namespace OriGames.SoulStonesForAll
                 new WobSettings.Num<int>(Constants.SETTINGS_GOLD_CHEST_BONUS, "Get this amount of soul stones for every opened gold chest", 0, 1),
                 new WobSettings.Num<int>(Constants.SETTINGS_FAIRY_CHEST_BONUS, "Get this amount of soul stones for every opened fairy chest", 0, 1),
                 new WobSettings.Num<int>(Constants.SETTINGS_ORE_CHEST_BONUS, "Get this amount of soul stones for every opened ore chest", 0, 1),
-                    
-                new WobSettings.Num<int>(Constants.SETTINGS_EVERYTHING_BONUS, "Increases amount of soul stones by this value every time they drop", 0, 1),
             });
         }
                 

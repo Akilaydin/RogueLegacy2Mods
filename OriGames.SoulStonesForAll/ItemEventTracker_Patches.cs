@@ -17,7 +17,7 @@
             {
                 if (BossRoomController_Patches.IsInBossFight)
                 {
-                    SoulStonesForAll.Log($"Tried to open chest in boss fight");
+                    SoulStonesForAll.Log($"Not giving additional souls for boss chest");
                     
                     return;
                 }

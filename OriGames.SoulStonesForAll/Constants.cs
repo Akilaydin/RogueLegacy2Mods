@@ -12,7 +12,6 @@
         public const string SETTINGS_GOLD_CHEST_BONUS = "GoldChestBonus";
         public const string SETTINGS_ORE_CHEST_BONUS = "OreChestBonus";
         public const string SETTINGS_FAIRY_CHEST_BONUS = "FairyChestBonus";
-        public const string SETTINGS_EVERYTHING_BONUS = "EverythingBonus";
         
         readonly public static HashSet<EnemyType> Bosses = new HashSet<EnemyType> 
         {
