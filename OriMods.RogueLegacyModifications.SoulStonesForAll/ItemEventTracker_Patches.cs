@@ -1,4 +1,4 @@
-﻿namespace OriGames.SoulStonesForAll
+﻿namespace OriGames.RogueLegacyModifications.SoulStonesForAll
 {
     using System;
 

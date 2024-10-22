@@ -5,7 +5,7 @@ VisualStudioVersion = 17.0.32014.148
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Wob_Common", "Wob_Common\Wob_Common.shproj", "{C2D09D20-E45B-434A-8E6E-16703A8B76DB}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OriGames.SoulStonesForAll", "OriGames.SoulStonesForAll\OriGames.SoulStonesForAll.csproj", "{F76DC946-AC74-449F-B365-2C159D5514FF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OriMods.RogueLegacyModifications.SoulStonesForAll", "OriMods.RogueLegacyModifications.SoulStonesForAll\OriMods.RogueLegacyModifications.SoulStonesForAll.csproj", "{F76DC946-AC74-449F-B365-2C159D5514FF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

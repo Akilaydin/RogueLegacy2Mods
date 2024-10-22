@@ -5,7 +5,7 @@ using Wob_Common;
 //note: IMPORTANT NOTE: Patches moved to separate classes, but still use [HarmonyPatch] overload with both class and method names.
 //See this issue for more info: https://discord.com/channels/131466550938042369/361891646742462467/1297901342701912168
 
-namespace OriGames.SoulStonesForAll
+namespace OriGames.RogueLegacyModifications.SoulStonesForAll
 {
     using System;
     using System.Collections.Generic;
@@ -13,7 +13,7 @@ namespace OriGames.SoulStonesForAll
 
     using UnityEngine;
 
-    [BepInPlugin("OriGames.SoulStonesForAll", "Soul Stones For All Mod", "1.0.0")]
+    [BepInPlugin("OriMods.RogueLegacyModifications.SoulStonesForAll", "Soul Stones For All Mod", "1.0.0")]
     public partial class SoulStonesForAll : BaseUnityPlugin
     {
         readonly public static Dictionary<EnemyRank, int> EnemyBonusByRank = new Dictionary<EnemyRank, int>();
