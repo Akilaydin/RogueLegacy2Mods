@@ -7,6 +7,8 @@ Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Wob_Common", "Wob_Common\Wo
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OriMods.RogueLegacyModifications.SoulStonesForAll", "OriMods.RogueLegacyModifications.SoulStonesForAll\OriMods.RogueLegacyModifications.SoulStonesForAll.csproj", "{F76DC946-AC74-449F-B365-2C159D5514FF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OriGames.RogueLegacyModifications.RichChests", "OriGames.RogueLegacyModifications.RichChests\OriGames.RogueLegacyModifications.RichChests.csproj", "{54F193AD-8B64-47A9-ADCB-6AD4728E569F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -17,6 +19,10 @@ Global
 		{F76DC946-AC74-449F-B365-2C159D5514FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F76DC946-AC74-449F-B365-2C159D5514FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F76DC946-AC74-449F-B365-2C159D5514FF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{54F193AD-8B64-47A9-ADCB-6AD4728E569F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{54F193AD-8B64-47A9-ADCB-6AD4728E569F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{54F193AD-8B64-47A9-ADCB-6AD4728E569F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{54F193AD-8B64-47A9-ADCB-6AD4728E569F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
