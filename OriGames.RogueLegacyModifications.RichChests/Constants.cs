@@ -19,7 +19,7 @@
         public const float DEFAULT_GOLD_MULTIPLIER = 2f;
 
         // Default base drop values for ores
-        public const float DEFAULT_AETHER_ORE_BASE_DROP_AMOUNT = 150f;
-        public const float DEFAULT_IRON_ORE_BASE_DROP_AMOUNT = 175f;
+        public const int DEFAULT_AETHER_ORE_BASE_DROP_AMOUNT = 150;
+        public const int DEFAULT_IRON_ORE_BASE_DROP_AMOUNT = 175;
     }
 }

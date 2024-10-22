@@ -12,6 +12,8 @@
             // Only drop gold if the chest is a Bronze chest
             if (__instance.ChestType == ChestType.Bronze)
             {
+                RichChests.Log($"Dropping ONLY gold for bronze chest {__instance.name}");
+                
                 DropAdditionalGold();
 
                 return;
@@ -74,7 +76,7 @@
             ItemDropManager.DropItem(ItemDropType.RuneOre, aetherDropAmount, __instance.transform.position, true, true, true);
 
             // Log the total amount of ore dropped for debugging purposes
-            RichChests.Log("Amount of ore dropped: EQUIPMENT " + ironOreDropAmount + " RUNE " + aetherDropAmount);
+            RichChests.Log($"Aether ore drop amount: {aetherDropAmount} Iron ore drop amount: {ironOreDropAmount}");
 
             // Drop additional gold based on the multiplier setting
             DropAdditionalGold();
@@ -85,6 +87,8 @@
                 var goldMultiplier = WobSettings.Get(Constants.SETTINGS_GOLD_MULTIPLIER, Constants.DEFAULT_GOLD_MULTIPLIER);
                 var goldDropAmount = __instance.Gold * goldMultiplier;
 
+                RichChests.Log($"Dropping additional {goldDropAmount} gold");
+                
                 ItemDropManager.DropGold(Mathf.FloorToInt(goldDropAmount), __instance.transform.position, true, true, true);
             }
 
@@ -97,7 +101,7 @@
                     : WobSettings.Get(Constants.SETTINGS_IRON_ORE_BASE_DROP_AMOUNT, Constants.DEFAULT_IRON_ORE_BASE_DROP_AMOUNT);
 
                 // Calculate ore amount based on base amount and chest level
-                return (int)(baseAmount + chestLevel);
+                return baseAmount + chestLevel;
             }
         }
     }
