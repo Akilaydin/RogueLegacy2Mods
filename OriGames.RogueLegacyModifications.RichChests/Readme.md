@@ -1,6 +1,6 @@
 ### Rich Chests Mod
 
-[Nexus mods link CHANGE](https://www.nexusmods.com/site/mods/99999).
+[Nexus mods link](https://www.nexusmods.com/roguelegacy2/mods/43).
 
 #### About this mod
 

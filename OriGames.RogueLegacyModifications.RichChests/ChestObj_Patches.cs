@@ -9,6 +9,8 @@
     {
         private static void Postfix(ChestObj __instance)
         {
+            RichChests.Log($"OpenChestAnimCoroutine ended for chest {__instance.name} {__instance.ChestType}");
+            
             // Only drop gold if the chest is a Bronze chest
             if (__instance.ChestType == ChestType.Bronze)
             {

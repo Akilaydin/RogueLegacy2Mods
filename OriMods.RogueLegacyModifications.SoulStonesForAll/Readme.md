@@ -1,6 +1,6 @@
 ### Soul Stones for All Mod
 
-[Nexus mods link CHANGE](https://www.nexusmods.com/site/mods/99999).
+[Nexus mods link](https://www.nexusmods.com/roguelegacy2/mods/42).
 
 #### About this mod
 

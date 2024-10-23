@@ -9,7 +9,7 @@ namespace OriGames.RogueLegacyModifications.RichChests
 {
     using System;
 
-    [BepInPlugin("OriMods.RogueLegacyModifications.RichChests", "Soul Stones For All Mod", "1.0.0")]
+    [BepInPlugin("OriMods.RogueLegacyModifications.RichChests", "Rich Chests Mod", "1.0.0")]
     public partial class RichChests : BaseUnityPlugin
     {
         protected void Awake()
@@ -39,7 +39,7 @@ namespace OriGames.RogueLegacyModifications.RichChests
                 // Gold Multiplier Setting
                 new WobSettings.Num<float>(
                     Constants.SETTINGS_GOLD_MULTIPLIER, 
-                    "Multiplier for gold drops", 
+                    "Multiplier for gold drops from chests", 
                     value: Constants.DEFAULT_GOLD_MULTIPLIER, 
                     scaler: 1f
                 ),
@@ -47,7 +47,7 @@ namespace OriGames.RogueLegacyModifications.RichChests
                 // Every Ore Multiplier Setting
                 new WobSettings.Num<float>(
                     Constants.SETTINGS_EVERY_ORE_MULTIPLIER, 
-                    "Multiplier for all ore drops", 
+                    "Multiplier for all ore drops from chests", 
                     value: Constants.DEFAULT_EVERY_ORE_MULTIPLIER, 
                     scaler: 1f
                 ),
@@ -55,7 +55,7 @@ namespace OriGames.RogueLegacyModifications.RichChests
                 // Aether Ore Base Drop Amount Setting
                 new WobSettings.Num<float>(
                     Constants.SETTINGS_AETHER_ORE_BASE_DROP_AMOUNT, 
-                    "Base drop amount for Aether Ore", 
+                    "Base drop amount for Aether Ore from chests", 
                     value: Constants.DEFAULT_AETHER_ORE_BASE_DROP_AMOUNT, 
                     scaler: 1f
                 ),
@@ -63,7 +63,7 @@ namespace OriGames.RogueLegacyModifications.RichChests
                 // Iron Ore Base Drop Amount Setting
                 new WobSettings.Num<float>(
                     Constants.SETTINGS_IRON_ORE_BASE_DROP_AMOUNT, 
-                    "Base drop amount for Iron Ore", 
+                    "Base drop amount for Iron Ore from chests", 
                     value: Constants.DEFAULT_IRON_ORE_BASE_DROP_AMOUNT, 
                     scaler: 1f
                 ),
